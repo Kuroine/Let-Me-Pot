@@ -13,6 +13,6 @@ Let-Me-Pot
 
 - 输入 药水绑定 后, 使用一次技能
 
-- 编辑 potions.js 添加对应[药品]参数
+- 编辑 config.json 添加对应[药品]参数
 
 - 重启proxy

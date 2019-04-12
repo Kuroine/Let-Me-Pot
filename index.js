@@ -1,55 +1,83 @@
 module.exports = function LetMePot(mod) {
+	const command = mod.command || mod.require.command;
 	
-	const config = require('./config.json');
-	const potions = require('./potions.js');
+	if (mod.proxyAuthor !== 'caali') {
+		const options = require('./module').options
+		if (options) {
+			const settingsVersion = options.settingsVersion
+			if (settingsVersion) {
+				mod.settings = require('./' + (options.settingsMigrator || 'settings_migrator.js'))(mod.settings._version, settingsVersion, mod.settings)
+				mod.settings._version = settingsVersion
+			}
+		}
+	}
 	
-	let enabled = config.enabled,
-		AUTOHP = config.autoHP,						// true - Activates the auto-hp potion function / false - Deactivates
-		AUTOMP = config.autoMP,						// true - Activates the auto-mp potion function / false - Deactivates
-		NOTIFICATIONS = config.notifications;		// true - Activates notification when a potions is used / false - Deactivates
+	const potions = mod.settings.potions;
 	
-	let	oCid = null,
-		oX = null,
+	let	oX = null,
 		oY = null,
 		oZ = null,
 		oW = null,
-		oInCombat = false,
+		
 		oHp = 100,
-		oMana = 100,
+		oMp = 100,
 		oAlive = false,
+		oInCombat = false,
 		getPotInfo = false;
 	
-	let hpPotList = potions.filter(function (p) { return p.hp == true; }),
-		mpPotList = potions.filter(function (p) { return p.hp != true; });
+	let hpPotList = potions.filter(function (p) { return p.hp == true; });
+	let mpPotList = potions.filter(function (p) { return p.hp != true; });
 	
 	hpPotList.sort(function (a, b) { return parseFloat(a.use_at) - parseFloat(b.use_at); });
 	mpPotList.sort(function (a, b) { return parseFloat(a.use_at) - parseFloat(b.use_at); });
 	
 	mod.command.add('药水', () => {
-		enabled = !enabled;
-		let txt = (enabled) ? '<font color="#56B4E9">启用</font>' : '<font color="#E69F00">禁用</font>';
+		mod.settings.enabled = !mod.settings.enabled;
+		let txt = (mod.settings.enabled) ? '<font color="#56B4E9">启用</font>' : '<font color="#E69F00">禁用</font>';
 		message(txt, true);
 	});
 	
 	mod.command.add('药水计量', () => {
-		NOTIFICATIONS = !NOTIFICATIONS;
-		let txt = (NOTIFICATIONS) ? '<font color="#56B4E9">启用</font>' : '<font color="#E69F00">禁用</font>';
-        message('文字提示 ' + txt, true);
-    });
+		mod.settings.notifications = !mod.settings.notifications;
+		let txt = (mod.settings.notifications) ? '<font color="#56B4E9">启用</font>' : '<font color="#E69F00">禁用</font>';
+		message('文字提示 ' + txt, true);
+	});
 	
 	mod.command.add('药水绑定', () => {
 		getPotInfo = true;
 		message('使用1次您想要添加的[<font color="#56B4E9">药水</font>], 并在代理控制台中查看itemID', true);
 	});
 	
-	mod.hook('S_LOGIN', 12, (event) => {
-		enabled = false;
-		oCid = event.gameId;
-		enabled = config.enabled;
+	mod.game.on('enter_game', () => {
+		oAlive = true;
 	});
 	
-	mod.hook('S_SPAWN_ME', 3, (event) => {
-		oAlive = event.alive;
+	mod.game.on('leave_game', () => {
+		oAlive = false;
+		for (let j = 0; j < hpPotList.length; j++) {
+			hpPotList[j].invQtd = 0;
+			hpPotList[j].id = 0;
+		}
+		for (let k = 0; k < mpPotList.length; k++) {
+			mpPotList[k].invQtd = 0;
+			mpPotList[k].id = 0;
+		}
+	});
+	
+	mod.game.me.on('resurrect', () => {
+		oAlive = true;
+	});
+	
+	mod.game.me.on('die', () => {
+		oAlive = false;
+	});
+	
+	mod.game.me.on('enter_combat', () => {
+		oInCombat = true;
+	});
+	
+	mod.game.me.on('leave_combat', () => {
+		oInCombat = false;
 	});
 	
 	mod.hook('C_PLAYER_LOCATION', 5, { order: -2 }, (event) => {
@@ -59,76 +87,75 @@ module.exports = function LetMePot(mod) {
 		oW = event.w;
 	});
 	
-	mod.hook('S_USER_STATUS', 3, (event) => {
-		if (event.gameId == oCid) {
-			oInCombat = ((event.status == 1) ? true : false);
-		}
-	});
-	
-	mod.hook('S_INVEN', 17, { order: -2 }, (event) => {
-		if (!enabled) return; // Too much info, better just turn off if disabled
-		let tempInv = event.items;
-		for (let i = 0; i < tempInv.length; i++) {
-			for (let o = 0; o < hpPotList.length; o++) {
-				if (hpPotList[o].item == tempInv[i].id) {
-					hpPotList[o].invQtd = tempInv[i].amount;
-					hpPotList[o].id = tempInv[i].dbid;
-				}
-			}
-			for (let p = 0; p < mpPotList.length; p++) {
-				if (mpPotList[p].item == tempInv[i].id) {
-					mpPotList[p].invQtd = tempInv[i].amount;
-					mpPotList[p].id = tempInv[i].dbid;
-				}
-			}
-		}
-	});
-	
 	mod.hook('C_USE_ITEM', 3, { order: -2 }, (event) => {
-		if (getPotInfo == true && event.gameId == oCid) {
+		if (getPotInfo && event.gameId == mod.game.me.gameId) {
 			message('药品信息: { item: ' + event.id + ' }');
 			getPotInfo = false;
 		}
 	});
 	
-	mod.hook('S_CREATURE_CHANGE_HP', 6, (event) => {
-		if (!enabled || !AUTOHP) return;
-		if (event.target == oCid) {
-			oHp = Math.round(Number(event.curHp) / Number(event.maxHp) * 100);
-			if (event.curHp <= 0) oAlive = false;
-			for (let i = 0; i < hpPotList.length; i++) {
-				if (oHp <= hpPotList[i].use_at && hpPotList[i].inCd == false && hpPotList[i].invQtd > 0 && oInCombat == true && oAlive == true) {
-					useItem(hpPotList[i]);
-					hpPotList[i].inCd = true;
-					hpPotList[i].invQtd--;
-					setTimeout(function () { hpPotList[i].inCd = false; }, hpPotList[i].cd * 1000);
-					if (NOTIFICATIONS) message('已自动使用[<font color="#56B4E9">' + hpPotList[i].name + '</font>], 剩余<font color="#E69F00">' + hpPotList[i].invQtd + '</font>瓶', true);
-					break;
+	mod.hook('S_INVEN', 18, { order: -2 }, (event) => {
+		if (!mod.settings.enabled) return; // Too much info, better just turn off if disabled
+		
+		for (const tempInv of event.items) {
+			for (let o = 0; o < hpPotList.length; o++) {
+				if (hpPotList[o].item == tempInv.id) {
+					hpPotList[o].invQtd = tempInv.amount;
+					hpPotList[o].id = tempInv.dbid;
+				}
+			}
+			for (let p = 0; p < mpPotList.length; p++) {
+				if (mpPotList[p].item == tempInv.id) {
+					mpPotList[p].invQtd = tempInv.amount;
+					mpPotList[p].id = tempInv.dbid;
 				}
 			}
 		}
 	});
 	
+	mod.hook('S_CREATURE_CHANGE_HP', 6, (event) => {
+		if (!mod.settings.enabled || !mod.settings.autoHP) return;
+		if (event.target != mod.game.me.gameId || !oInCombat || !oAlive) return;
+		
+		oHp = Math.round(Number(event.curHp) / Number(event.maxHp) * 100);
+		
+		for (let i = 0; i < hpPotList.length; i++) {
+			if (oHp < hpPotList[i].use_at && !hpPotList[i].inCd && hpPotList[i].invQtd !== 0) {
+				useItem(hpPotList[i]);
+				
+				hpPotList[i].inCd = true;
+				setTimeout(function () {
+					hpPotList[i].inCd = false;
+				}, hpPotList[i].cd * 1000);
+				
+				break;
+			}
+		}
+	});
+	
 	mod.hook('S_PLAYER_CHANGE_MP', 1, (event) => {
-		if (!enabled || !AUTOMP) return;
-		if (event.target == oCid) {
-			oMana = Math.round(Number(event.currentMp) / Number(event.maxMp) * 100);
-			for (let i = 0; i < mpPotList.length; i++) {
-				if (oMana <= mpPotList[i].use_at && mpPotList[i].inCd == false && mpPotList[i].invQtd > 0 && oInCombat == true && oAlive == true) {
-					useItem(mpPotList[i]);
-					mpPotList[i].inCd = true;
-					mpPotList[i].invQtd--;
-					setTimeout(function () { mpPotList[i].inCd = false; }, mpPotList[i].cd * 1000);
-					if (NOTIFICATIONS) message('已自动使用[<font color="#56B4E9">' + mpPotList[i].name + '</font>], 剩余<font color="#E69F00">' + mpPotList[i].invQtd + '</font>瓶', true);
-					break;
-				}
+		if (!mod.settings.enabled || !mod.settings.autoMP) return;
+		if (event.target != mod.game.me.gameId || !oInCombat || !oAlive) return;
+		
+		oMp = Math.round(Number(event.currentMp) / Number(event.maxMp) * 100);
+		
+		for (let i = 0; i < mpPotList.length; i++) {
+			if (oMp < mpPotList[i].use_at && !mpPotList[i].inCd && mpPotList[i].invQtd !== 0) {
+				useItem(mpPotList[i]);
+				
+				mpPotList[i].inCd = true;
+				setTimeout(function () {
+					mpPotList[i].inCd = false;
+				}, mpPotList[i].cd * 1000);
+				
+				break;
 			}
 		}
 	});
 	
 	function useItem(potInfo) {
 		mod.send('C_USE_ITEM', 3, {
-			gameId: oCid,
+			gameId: mod.game.me.gameId,
 			id: potInfo.item,
 			dbid: potInfo.id,
 			target: 0,
@@ -140,9 +167,13 @@ module.exports = function LetMePot(mod) {
 			unk2: 0,
 			unk3: 0,
 			unk4: 1
-		});        
+		});
+		
+		if (mod.settings.notifications) {
+			message('已使用 <font color="#56B4E9">' + potInfo.name + '</font> 剩余<font color="#E69F00">' + (--potInfo.invQtd) + '</font>瓶', true);
+		}
 	}
-
+	
 	function message(msg, chat = false) {
 		if (chat == true) {
 			mod.command.message(msg);

@@ -1,12 +1,16 @@
 {
-	"disableAutoUpdate": false,
-	"name": "Let-Me-Pot",
-	"options": {
-		"niceName": "自动喝药",
-		"guiName": "自动喝药"
-	},
-	"author": "ZC",
-	"description": "自动使用背包中 HP/MP 恢复药水",
-	"servers": ["https://raw.githubusercontent.com/zc149352394/Let-Me-Pot/master/"],
-	"supportUrl": "https://github.com/zc149352394/Let-Me-Pot/issues"
+    "disableAutoUpdate": false,
+    "name": "Let-Me-Pot",
+    "options": {
+        "niceName": "自动喝药",
+        "guiName": "自动喝药",
+        "settingsFile": "config.json",
+        "settingsMigrator": "settings_migrator.js",
+        "settingsVersion": 1
+    },
+    "author": "ZC",
+    "description": "自动使用背包中 HP/MP 恢复药水",
+    "servers": ["https://raw.githubusercontent.com/zc149352394/Let-Me-Pot/master/"],
+    "supportUrl": "https://github.com/zc149352394/Let-Me-Pot/issues",
+    "version": "80.04"
 }
