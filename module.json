@@ -12,5 +12,5 @@
     "description": "自动使用背包中 HP/MP 恢复药水",
     "servers": ["https://raw.githubusercontent.com/zc149352394/Let-Me-Pot/master/"],
     "supportUrl": "https://github.com/zc149352394/Let-Me-Pot/issues",
-    "version": "80.04"
+    "version": "81.03"
 }

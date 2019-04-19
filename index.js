@@ -31,19 +31,19 @@ module.exports = function LetMePot(mod) {
 	hpPotList.sort(function (a, b) { return parseFloat(a.use_at) - parseFloat(b.use_at); });
 	mpPotList.sort(function (a, b) { return parseFloat(a.use_at) - parseFloat(b.use_at); });
 	
-	mod.command.add('药水', () => {
+	mod.command.add("药水", () => {
 		mod.settings.enabled = !mod.settings.enabled;
 		let txt = (mod.settings.enabled) ? '<font color="#56B4E9">启用</font>' : '<font color="#E69F00">禁用</font>';
 		message(txt, true);
 	});
 	
-	mod.command.add('药水计量', () => {
+	mod.command.add("药水计量", () => {
 		mod.settings.notifications = !mod.settings.notifications;
 		let txt = (mod.settings.notifications) ? '<font color="#56B4E9">启用</font>' : '<font color="#E69F00">禁用</font>';
-		message('文字提示 ' + txt, true);
+		message("文字提示 " + txt, true);
 	});
 	
-	mod.command.add('药水绑定', () => {
+	mod.command.add("药水绑定", () => {
 		getPotInfo = true;
 		message('使用1次您想要添加的[<font color="#56B4E9">药水</font>], 并在代理控制台中查看itemID', true);
 	});
@@ -56,11 +56,11 @@ module.exports = function LetMePot(mod) {
 		oAlive = false;
 		for (let j = 0; j < hpPotList.length; j++) {
 			hpPotList[j].invQtd = 0;
-			hpPotList[j].id = 0;
+			hpPotList[j].id = null;
 		}
 		for (let k = 0; k < mpPotList.length; k++) {
 			mpPotList[k].invQtd = 0;
-			mpPotList[k].id = 0;
+			mpPotList[k].id = null;
 		}
 	});
 	
@@ -89,7 +89,7 @@ module.exports = function LetMePot(mod) {
 	
 	mod.hook('C_USE_ITEM', 3, { order: -2 }, (event) => {
 		if (getPotInfo && event.gameId == mod.game.me.gameId) {
-			message('药品信息: { item: ' + event.id + ' }');
+			message("药品信息: { item: " + event.id + " }");
 			getPotInfo = false;
 		}
 	});
@@ -178,7 +178,7 @@ module.exports = function LetMePot(mod) {
 		if (chat == true) {
 			mod.command.message(msg);
 		} else {
-			console.log('(Let Me Pot) ' + msg);
+			console.log("(Let Me Pot) " + msg);
 		}
 	}
 	
