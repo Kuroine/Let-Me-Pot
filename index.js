@@ -14,7 +14,7 @@ module.exports = function LetMePot(mod) {
 	
 	const potions = mod.settings.potions;
 	
-	let	oX = null,
+	let oX = null,
 		oY = null,
 		oZ = null,
 		oW = null,
@@ -34,7 +34,7 @@ module.exports = function LetMePot(mod) {
 	mod.command.add("药水", () => {
 		mod.settings.enabled = !mod.settings.enabled;
 		let txt = (mod.settings.enabled) ? '<font color="#56B4E9">启用</font>' : '<font color="#E69F00">禁用</font>';
-		message(txt, true);
+		message('模组 ' + txt, true);
 	});
 	
 	mod.command.add("药水计量", () => {
