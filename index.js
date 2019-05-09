@@ -31,21 +31,21 @@ module.exports = function LetMePot(mod) {
 	hpPotList.sort(function (a, b) { return parseFloat(a.use_at) - parseFloat(b.use_at); });
 	mpPotList.sort(function (a, b) { return parseFloat(a.use_at) - parseFloat(b.use_at); });
 	
-	mod.command.add("药水", () => {
+	mod.command.add("letmepot", () => {
 		mod.settings.enabled = !mod.settings.enabled;
-		let txt = (mod.settings.enabled) ? '<font color="#56B4E9">启用</font>' : '<font color="#E69F00">禁用</font>';
+		let txt = (mod.settings.enabled) ? '<font color="#56B4E9">Enabled</font>' : '<font color="#E69F00">Disabled</font>';
 		message('模组 ' + txt, true);
 	});
 	
-	mod.command.add("药水计量", () => {
+	mod.command.add("Potleft", () => {
 		mod.settings.notifications = !mod.settings.notifications;
-		let txt = (mod.settings.notifications) ? '<font color="#56B4E9">启用</font>' : '<font color="#E69F00">禁用</font>';
-		message("文字提示 " + txt, true);
+		let txt = (mod.settings.notifications) ? '<font color="#56B4E9">Enabled</font>' : '<font color="#E69F00">Disabled</font>';
+		message("Notifications: " + txt, true);
 	});
 	
-	mod.command.add("药水绑定", () => {
+	mod.command.add("getpotinfo", () => {
 		getPotInfo = true;
-		message('使用1次您想要添加的[<font color="#56B4E9">药水</font>], 并在代理控制台中查看itemID', true);
+		message('Drink the pot you want to use and look at the potID in console', true);
 	});
 	
 	mod.game.on('enter_game', () => {
@@ -89,7 +89,7 @@ module.exports = function LetMePot(mod) {
 	
 	mod.hook('C_USE_ITEM', 3, { order: -2 }, (event) => {
 		if (getPotInfo && event.gameId == mod.game.me.gameId) {
-			message("药品信息: { item: " + event.id + " }");
+			message("Pot Info: { item: " + event.id + " }");
 			getPotInfo = false;
 		}
 	});
@@ -170,7 +170,7 @@ module.exports = function LetMePot(mod) {
 		});
 		
 		if (mod.settings.notifications) {
-			message('已使用 <font color="#56B4E9">' + potInfo.name + '</font> 剩余<font color="#E69F00">' + (--potInfo.invQtd) + '</font>瓶', true);
+			message('Drank <font color="#56B4E9">' + potInfo.name + '</font> Left<font color="#E69F00">' + (--potInfo.invQtd) + '</font>瓶', true);
 		}
 	}
 	
